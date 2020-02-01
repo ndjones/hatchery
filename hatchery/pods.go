@@ -233,7 +233,7 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 		},
 	}
 
-	var volumeMounts = []k8sv1.VolumeMount{
+	var hatcheryVolumeMounts = []k8sv1.VolumeMount{
 		{
 			MountPath:        "/data",
 			Name:             "shared-data",
@@ -252,11 +252,24 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 			},
 		})
 
-		volumeMounts = append(volumeMounts, k8sv1.VolumeMount{
+		hatcheryVolumeMounts = append(hatcheryVolumeMounts, k8sv1.VolumeMount{
 			MountPath: hatchApp.UserVolumeLocation,
 			Name:      "user-data",
 		})
 
+	}
+
+	var fuseVolumeMounts = []k8sv1.VolumeMount{
+		{
+			MountPath:        "/data",
+			Name:             "shared-data",
+			MountPropagation: &bidirectional,
+		},
+		{
+			MountPath:        "/external_manifests",
+			Name:             "external-manifests",
+			MountPropagation: &bidirectional,
+		},
 	}
 
 	//hatchConfig.Logger.Printf("volumes configured")
@@ -294,7 +307,7 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 					Env:             envVars,
 					Command:         hatchApp.Command,
 					Args:            hatchApp.Args,
-					VolumeMounts:    volumeMounts,
+					VolumeMounts:    hatcheryVolumeMounts,
 					Resources: k8sv1.ResourceRequirements{
 						Limits: k8sv1.ResourceList{
 							k8sv1.ResourceCPU:    resource.MustParse(hatchApp.CPULimit),
@@ -327,13 +340,7 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 					Env:             sidecarEnvVars,
 					Command:         hatchConfig.Config.Sidecar.Command,
 					Args:            hatchConfig.Config.Sidecar.Args,
-					VolumeMounts: []k8sv1.VolumeMount{
-						{
-							MountPath:        "/data",
-							Name:             "shared-data",
-							MountPropagation: &bidirectional,
-						},
-					},
+					VolumeMounts:    fuseVolumeMounts,
 					Resources: k8sv1.ResourceRequirements{
 						Limits: k8sv1.ResourceList{
 							k8sv1.ResourceCPU:    resource.MustParse(hatchConfig.Config.Sidecar.CPULimit),
