@@ -231,10 +231,10 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 			Name:         "shared-data",
 			VolumeSource: k8sv1.VolumeSource{},
 		},
-		// {
-		// 	Name:         "external-manifests",
-		// 	VolumeSource: k8sv1.VolumeSource{},
-		// },
+		{
+			Name:         "external-manifests",
+			VolumeSource: k8sv1.VolumeSource{},
+		},
 	}
 
 	var hatcheryVolumeMounts = []k8sv1.VolumeMount{
@@ -245,39 +245,10 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 		},
 	}
 
-	var fuseVolumeMounts = []k8sv1.VolumeMount{
-		{
-			MountPath:        "/data",
-			Name:             "shared-data",
-			MountPropagation: &bidirectional,
-		},
-		// {
-		// 	MountPath:        "/external_manifests",
-		// 	Name:             "external-manifests",
-		// 	MountPropagation: &bidirectional,
-		// },
-	}
-
-	hatchConfig.Logger.Printf("hatchApp.UserVolumeLocation")
-	hatchConfig.Logger.Printf(hatchApp.UserVolumeLocation)
 	if hatchApp.UserVolumeLocation != "" {
 		claimName := userToResourceName(userName, "claim")
-		// volumes = append(volumes, k8sv1.Volume{
-		// 	Name: "user-data",
-		// 	VolumeSource: k8sv1.VolumeSource{
-		// 		PersistentVolumeClaim: &k8sv1.PersistentVolumeClaimVolumeSource{
-		// 			ClaimName: claimName,
-		// 		},
-		// 	},
-		// })
-
-		// hatcheryVolumeMounts = append(hatcheryVolumeMounts, k8sv1.VolumeMount{
-		// 	MountPath: hatchApp.UserVolumeLocation,
-		// 	Name:      "user-data",
-		// })
-
 		volumes = append(volumes, k8sv1.Volume{
-			Name: "external-manifests",
+			Name: "user-data",
 			VolumeSource: k8sv1.VolumeSource{
 				PersistentVolumeClaim: &k8sv1.PersistentVolumeClaimVolumeSource{
 					ClaimName: claimName,
@@ -287,14 +258,22 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 
 		hatcheryVolumeMounts = append(hatcheryVolumeMounts, k8sv1.VolumeMount{
 			MountPath: hatchApp.UserVolumeLocation,
-			Name:      "external-manifests",
+			Name:      "user-data",
 		})
 
-		fuseVolumeMounts = append(fuseVolumeMounts, k8sv1.VolumeMount{
-			MountPath: hatchApp.UserVolumeLocation,
-			Name:      "external-manifests",
-		})
+	}
 
+	var fuseVolumeMounts = []k8sv1.VolumeMount{
+		{
+			MountPath:        "/data",
+			Name:             "shared-data",
+			MountPropagation: &bidirectional,
+		},
+		{
+			MountPath:        "/external_manifests",
+			Name:             "external-manifests",
+			MountPropagation: &bidirectional,
+		},
 	}
 
 	//hatchConfig.Logger.Printf("volumes configured")
