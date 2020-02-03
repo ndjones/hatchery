@@ -231,10 +231,6 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 			Name:         "shared-data",
 			VolumeSource: k8sv1.VolumeSource{},
 		},
-		{
-			Name:         "external-manifests",
-			VolumeSource: k8sv1.VolumeSource{},
-		},
 	}
 
 	var hatcheryVolumeMounts = []k8sv1.VolumeMount{
@@ -242,6 +238,14 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 			MountPath:        "/data",
 			Name:             "shared-data",
 			MountPropagation: &hostToContainer,
+		},
+	}
+
+	var fuseVolumeMounts = []k8sv1.VolumeMount{
+		{
+			MountPath:        "/data",
+			Name:             "shared-data",
+			MountPropagation: &bidirectional,
 		},
 	}
 
@@ -260,21 +264,22 @@ func buildPod(hatchConfig *FullHatcheryConfig, hatchApp *Container, userName str
 			MountPath: hatchApp.UserVolumeLocation,
 			Name:      "user-data",
 		})
-
 	}
 
-	var fuseVolumeMounts = []k8sv1.VolumeMount{
-		{
-			MountPath:        "/data",
-			Name:             "shared-data",
-			MountPropagation: &bidirectional,
-		},
-		{
-			MountPath:        "/external_manifests",
-			Name:             "external-manifests",
-			MountPropagation: &bidirectional,
-		},
-	}
+	// external manifests dir
+	volumes = append(volumes, k8sv1.Volume{
+		Name:         "external-manifests",
+		VolumeSource: k8sv1.VolumeSource{},
+	})
+	hatcheryVolumeMounts = append(hatcheryVolumeMounts, k8sv1.VolumeMount{
+		MountPath:        "/external_manifests",
+		Name:             "external-manifests",
+	})
+	fuseVolumeMounts = append(fuseVolumeMounts, k8sv1.VolumeMount{
+		MountPath:        "/external_manifests",
+		Name:             "external-manifests",
+		MountPropagation: &bidirectional,
+	})
 
 	//hatchConfig.Logger.Printf("volumes configured")
 
